@@ -1,0 +1,2547 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم إمبراطور الفراغ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0a0a2a;
+            --secondary: #1a1a3a;
+            --accent: #9d4edd;
+            --accent-light: #c77dff;
+            --text: #f8f9fa;
+            --text-secondary: #b8b8d1;
+            --card-bg: rgba(26, 26, 58, 0.8);
+            --border: #3a3a5d;
+            --success: #4CAF50;
+            --error: #f44336;
+            --info: #2196F3;
+            --warning: #ff9800;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --transition: all 0.3s ease;
+            --radius: 10px;
+        }
+
+        body {
+            font-family: 'Tajawal', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .admin-header {
+            background: rgba(10, 10, 42, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-bottom: 2px solid var(--accent);
+            margin-bottom: 30px;
+            border-radius: var(--radius);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .admin-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1.8rem;
+            color: var(--accent-light);
+        }
+
+        .admin-title i {
+            font-size: 2rem;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            color: var(--text-secondary);
+        }
+
+        /* Main Layout */
+        .admin-main {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+            min-height: calc(100vh - 150px);
+        }
+
+        @media (max-width: 992px) {
+            .admin-main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Sidebar */
+        .admin-sidebar {
+            background: rgba(10, 10, 42, 0.8);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 2px solid var(--border);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar-title {
+            color: var(--accent-light);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border);
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nav-item {
+            padding: 15px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: rgba(157, 78, 221, 0.2);
+            color: var(--accent-light);
+            transform: translateX(-5px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(157, 78, 221, 0.3);
+        }
+
+        /* Content Area */
+        .admin-content {
+            background: rgba(10, 10, 42, 0.8);
+            border-radius: var(--radius);
+            padding: 30px;
+            border: 2px solid var(--border);
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .section-title {
+            color: var(--accent-light);
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: rgba(157, 78, 221, 0.1);
+            border-radius: var(--radius);
+            padding: 25px;
+            border: 2px solid var(--border);
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            color: var(--accent-light);
+            margin-bottom: 15px;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--accent-light);
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(10, 10, 42, 0.5);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .data-table thead {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+        }
+
+        .data-table th {
+            padding: 20px;
+            color: #fff;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .data-table tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(157, 78, 221, 0.1);
+        }
+
+        .data-table td {
+            padding: 15px 20px;
+            color: var(--text);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            background: rgba(10, 10, 42, 0.9);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.2);
+        }
+
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            padding: 15px 30px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(157, 78, 221, 0.4);
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #66BB6A);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--error), #EF5350);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #FFB74D);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, var(--info), #64B5F6);
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-edit {
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px solid var(--info);
+            color: var(--info);
+        }
+
+        .btn-delete {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid var(--error);
+            color: var(--error);
+        }
+
+        .btn-view {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        /* Login Page */
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 40px;
+            background: rgba(10, 10, 42, 0.9);
+            border-radius: 20px;
+            border: 2px solid var(--accent);
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-title {
+            color: var(--accent-light);
+            margin-bottom: 30px;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .login-title i {
+            font-size: 2.5rem;
+        }
+
+        .login-message {
+            margin-bottom: 30px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: var(--text-secondary);
+        }
+
+        .loading i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--accent-light);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--secondary);
+            border: 2px solid var(--accent);
+            border-radius: 15px;
+            padding: 20px 25px;
+            color: var(--text);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            animation: slideInRight 0.4s ease;
+            max-width: 350px;
+            font-weight: 500;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-color: var(--success);
+            background: rgba(76, 175, 80, 0.15);
+        }
+
+        .toast.error {
+            border-color: var(--error);
+            background: rgba(244, 67, 54, 0.15);
+        }
+
+        .toast.info {
+            border-color: var(--info);
+            background: rgba(33, 150, 243, 0.15);
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .toast-content i {
+            font-size: 1.5rem;
+        }
+
+        .toast.success .toast-content i { color: var(--success); }
+        .toast.error .toast-content i { color: var(--error); }
+        .toast.info .toast-content i { color: var(--info); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .admin-header {
+                padding: 15px;
+            }
+            
+            .admin-title {
+                font-size: 1.5rem;
+            }
+            
+            .admin-content {
+                padding: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .data-table {
+                font-size: 0.9rem;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 10px;
+            }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--primary);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 2px solid var(--accent);
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid var(--error);
+            color: var(--error);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            background: rgba(244, 67, 54, 0.4);
+            transform: rotate(90deg);
+        }
+
+        .modal-title {
+            color: var(--accent-light);
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-title">
+            <i class="fas fa-user-shield"></i>
+            <span>لوحة تحكم الإمبراطور</span>
+        </div>
+        <div class="login-message">
+            مرحباً سيدي الإمبراطور، يرجى إدخال كلمة المرور للوصول إلى لوحة التحكم
+        </div>
+        <div class="form-group">
+            <input type="password" id="adminPassword" class="form-control" placeholder="كلمة المرور" autocomplete="off">
+        </div>
+        <button id="loginBtn" class="btn btn-primary" style="width: 100%;">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>دخول</span>
+        </button>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="container" style="display: none;">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="header-content">
+                <div class="admin-title">
+                    <i class="fas fa-crown"></i>
+                    <span>لوحة تحكم إمبراطور الفراغ</span>
+                </div>
+                <div class="admin-info">
+                    <span id="currentTime">--:--:--</span>
+                    <button id="logoutBtn" class="btn btn-danger btn-small">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>تسجيل خروج</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Sidebar -->
+            <aside class="admin-sidebar">
+                <h3 class="sidebar-title">
+                    <i class="fas fa-bars"></i>
+                    <span>القائمة</span>
+                </h3>
+                <nav class="nav-menu">
+                    <a href="#" class="nav-item active" data-section="dashboard">
+                        <i class="fas fa-home"></i>
+                        <span>لوحة التحكم</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="achievements">
+                        <i class="fas fa-trophy"></i>
+                        <span>الإنجازات</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="portfolio">
+                        <i class="fas fa-briefcase"></i>
+                        <span>معرض الأعمال</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="blog">
+                        <i class="fas fa-blog"></i>
+                        <span>المدونة</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="comments">
+                        <i class="fas fa-comments"></i>
+                        <span>التعليقات</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="ratings">
+                        <i class="fas fa-star"></i>
+                        <span>التقييمات</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="players">
+                        <i class="fas fa-users"></i>
+                        <span>اللاعبين</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="analytics">
+                        <i class="fas fa-chart-line"></i>
+                        <span>الإحصائيات</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="settings">
+                        <i class="fas fa-cogs"></i>
+                        <span>الإعدادات</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Content Area -->
+            <div class="admin-content">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="section active">
+                    <h2 class="section-title">
+                        <i class="fas fa-home"></i>
+                        <span>لوحة التحكم الرئيسية</span>
+                    </h2>
+                    
+                    <!-- Stats Overview -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="stat-value" id="totalVisitors">0</div>
+                            <div class="stat-label">إجمالي الزوار</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-value" id="totalPlayers">0</div>
+                            <div class="stat-label">عدد اللاعبين</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <div class="stat-value" id="totalComments">0</div>
+                            <div class="stat-label">عدد التعليقات</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="stat-value" id="totalAchievements">0</div>
+                            <div class="stat-label">عدد الإنجازات</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="stat-value" id="totalRatings">0</div>
+                            <div class="stat-label">عدد التقييمات</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div class="stat-value" id="totalGames">0</div>
+                            <div class="stat-label">مباريات ملعوبة</div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div style="margin-bottom: 40px;">
+                        <h3 style="color: var(--accent-light); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-bolt"></i>
+                            <span>إجراءات سريعة</span>
+                        </h3>
+                        <div class="btn-group">
+                            <button class="btn btn-success" id="addAchievementQuick">
+                                <i class="fas fa-plus"></i>
+                                <span>إضافة إنجاز</span>
+                            </button>
+                            <button class="btn btn-info" id="addPortfolioQuick">
+                                <i class="fas fa-plus"></i>
+                                <span>إضافة عمل</span>
+                            </button>
+                            <button class="btn btn-warning" id="addBlogQuick">
+                                <i class="fas fa-plus"></i>
+                                <span>إضافة مقال</span>
+                            </button>
+                            <button class="btn btn-danger" id="clearStatsBtn">
+                                <i class="fas fa-trash"></i>
+                                <span>مسح الإحصائيات</span>
+                            </button>
+                            <button class="btn btn-primary" id="exportDataBtn">
+                                <i class="fas fa-download"></i>
+                                <span>تصدير البيانات</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div>
+                        <h3 style="color: var(--accent-light); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-history"></i>
+                            <span>النشاط الأخير</span>
+                        </h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>النوع</th>
+                                    <th>الوصف</th>
+                                    <th>التاريخ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentActivity">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Achievements Section -->
+                <section id="achievements" class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-trophy"></i>
+                        <span>إدارة الإنجازات</span>
+                    </h2>
+                    
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="color: var(--accent-light); margin-bottom: 15px;">إضافة إنجاز جديد</h3>
+                        <div class="form-group">
+                            <input type="text" id="achievementTitleAr" class="form-control" placeholder="العنوان بالعربية">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="achievementTitleEn" class="form-control" placeholder="Title in English">
+                        </div>
+                        <div class="form-group">
+                            <textarea id="achievementDescAr" class="form-control" placeholder="الوصف بالعربية"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <textarea id="achievementDescEn" class="form-control" placeholder="Description in English"></textarea>
+                        </div>
+                        <button class="btn btn-success" id="addAchievementBtn">
+                            <i class="fas fa-plus"></i>
+                            <span>إضافة الإنجاز</span>
+                        </button>
+                    </div>
+
+                    <div>
+                        <h3 style="color: var(--accent-light); margin-bottom: 15px;">الإنجازات الحالية</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>العنوان</th>
+                                    <th>الوصف</th>
+                                    <th>التاريخ</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="achievementsList">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Portfolio Section -->
+                <section id="portfolio" class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-briefcase"></i>
+                        <span>إدارة معرض الأعمال</span>
+                    </h2>
+                    
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="color: var(--accent-light); margin-bottom: 15px;">إضافة عمل جديد</h3>
+                        <div class="form-group">
+                            <input type="text" id="portfolioTitleAr" class="form-control" placeholder="العنوان بالعربية">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="portfolioTitleEn" class="form-control" placeholder="Title in English">
+                        </div>
+                        <div class="form-group">
+                            <textarea id="portfolioDescAr" class="form-control" placeholder="الوصف بالعربية"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <textarea id="portfolioDescEn" class="form-control" placeholder="Description in English"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="portfolioImage" class="form-control" placeholder="رابط الصورة">
+                        </div>
+                        <button class="btn btn-success" id="addPortfolioBtn">
+                            <i class="fas fa-plus"></i>
+                            <span>إضافة العمل</span>
+                        </button>
+                    </div>
+
+                    <div>
+                        <h3 style="color: var(--accent-light); margin-bottom: 15px;">الأعمال الحالية</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>العنوان</th>
+                                    <th>الوصف</th>
+                                    <th>الصورة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="portfolioList">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Blog Section -->
+                <section id="blog" class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-blog"></i>
+                        <span>إدارة المدونة</span>
+                    </h2>
+                    
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="color: var(--accent-light); margin-bottom: 15px;">إضافة مقال جديد</h3>
+                        <div class="form-group">
+                            <input type="text" id="blogTitleAr" class="form-control" placeholder="العنوان بالعربية">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="blogTitleEn" class="form-control" placeholder="Title in English">
+                        </div>
+                        <div class="form-group">
+                            <textarea id="blogContentAr" class="form-control" placeholder="المحتوى بالعربية" rows="6"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <textarea id="blogContentEn" class="form-control" placeholder="Content in English" rows="6"></textarea>
+                        </div>
+                        <button class="btn btn-success" id="addBlogBtn">
+                            <i class="fas fa-plus"></i>
+                            <span>نشر المقال</span>
+                        </button>
+                    </div>
+
+                    <div>
+                        <h3 style="color: var(--accent-light); margin-bottom: 15px;">المقالات الحالية</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>العنوان</th>
+                                    <th>المحتوى</th>
+                                    <th>التاريخ</th>
+                                    <th>الإعجابات</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="blogList">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Comments Section -->
+                <section id="comments" class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-comments"></i>
+                        <span>إدارة التعليقات</span>
+                    </h2>
+                    
+                    <div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>التعليق</th>
+                                    <th>القسم</th>
+                                    <th>التاريخ</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="commentsList">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Ratings Section -->
+                <section id="ratings" class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-star"></i>
+                        <span>إدارة التقييمات</span>
+                    </h2>
+                    
+                    <div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>المستخدم</th>
+                                    <th>التقييم</th>
+                                    <th>التعليق</th>
+                                    <th>التاريخ</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ratingsList">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Players Section -->
+                <section id="players" class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-users"></i>
+                        <span>إدارة اللاعبين</span>
+                    </h2>
+                    
+                    <div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>تاريخ التسجيل</th>
+                                    <th>عدد المباريات</th>
+                                    <th>أفضل نتيجة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="playersList">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Analytics Section -->
+                <section id="analytics" class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-line"></i>
+                        <span>الإحصائيات والتحليلات</span>
+                    </h2>
+                    
+                    <div style="margin-bottom: 40px;">
+                        <h3 style="color: var(--accent-light); margin-bottom: 20px;">إحصائيات الزوار</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-calendar-day"></i>
+                                </div>
+                                <div class="stat-value" id="visitorsToday">0</div>
+                                <div class="stat-label">زوار اليوم</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-calendar-week"></i>
+                                </div>
+                                <div class="stat-value" id="visitorsWeek">0</div>
+                                <div class="stat-label">زوار الأسبوع</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="stat-value" id="visitorsMonth">0</div>
+                                <div class="stat-label">زوار الشهر</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: var(--accent-light); margin-bottom: 20px;">إحصائيات الألعاب</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>اللعبة</th>
+                                    <th>عدد المباريات</th>
+                                    <th>متوسط النقاط</th>
+                                    <th>أعلى نتيجة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gamesStats">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section id="settings" class="section">
+                    <h2 class="section-title">
+                        <i class="fas fa-cogs"></i>
+                        <span>إعدادات الموقع</span>
+                    </h2>
+                    
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="color: var(--accent-light); margin-bottom: 20px;">إعدادات عامة</h3>
+                        <div class="form-group">
+                            <label for="siteTitle">عنوان الموقع</label>
+                            <input type="text" id="siteTitle" class="form-control" value="إمبراطور الفراغ">
+                        </div>
+                        <div class="form-group">
+                            <label for="siteDescription">وصف الموقع</label>
+                            <textarea id="siteDescription" class="form-control" rows="3">معرض الأعمال والإنجازات الشخصية - مملكة الفراغ اللامتناهية</textarea>
+                        </div>
+                        <button class="btn btn-primary" id="saveSettingsBtn">
+                            <i class="fas fa-save"></i>
+                            <span>حفظ الإعدادات</span>
+                        </button>
+                    </div>
+
+                    <div>
+                        <h3 style="color: var(--accent-light); margin-bottom: 20px;">أدوات النظام</h3>
+                        <div class="btn-group">
+                            <button class="btn btn-warning" id="clearCacheBtn">
+                                <i class="fas fa-broom"></i>
+                                <span>مسح الكاش</span>
+                            </button>
+                            <button class="btn btn-danger" id="resetStatsBtn">
+                                <i class="fas fa-trash"></i>
+                                <span>إعادة تعيين الإحصائيات</span>
+                            </button>
+                            <button class="btn btn-info" id="backupBtn">
+                                <i class="fas fa-save"></i>
+                                <span>إنشاء نسخة احتياطية</span>
+                            </button>
+                            <button class="btn btn-success" id="restoreBtn">
+                                <i class="fas fa-upload"></i>
+                                <span>استعادة نسخة</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Editing -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-close" id="closeModal">
+                <i class="fas fa-times"></i>
+            </div>
+            <h3 class="modal-title" id="modalTitle">تعديل</h3>
+            <div id="modalContent">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCOtGGiiG0B1L9C7UU7Ej2Lv72Lr5N7kVU",
+            authDomain: "emperorofthevoid-afc85.firebaseapp.com",
+            projectId: "emperorofthevoid-afc85",
+            storageBucket: "emperorofthevoid-afc85.firebasestorage.app",
+            messagingSenderId: "335893869858",
+            appId: "1:335893869858:web:9c59a651828f20240ea17b",
+            measurementId: "G-CFG1EF944F"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Global Variables
+        let isAdmin = false;
+        let currentModal = null;
+
+        // Toast Notification
+        function showToast(message, type = "info", duration = 4000) {
+            // Remove existing toasts
+            document.querySelectorAll(".toast").forEach(toast => {
+                toast.style.animation = "slideInRight 0.3s ease reverse";
+                setTimeout(() => toast.remove(), 300);
+            });
+
+            // Create new toast
+            const toast = document.createElement("div");
+            toast.className = `toast ${type}`;
+            
+            const icon = type === "success" ? "fa-check-circle" :
+                        type === "error" ? "fa-exclamation-circle" :
+                        type === "warning" ? "fa-exclamation-triangle" : "fa-info-circle";
+            
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <i class="fas ${icon}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto remove
+            setTimeout(() => {
+                toast.style.animation = "slideInRight 0.3s ease reverse";
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+            
+            // Click to remove
+            toast.addEventListener("click", () => {
+                toast.style.animation = "slideInRight 0.3s ease reverse";
+                setTimeout(() => toast.remove(), 300);
+            });
+        }
+
+        // Check Admin Login
+        function checkAdminLogin() {
+            const token = localStorage.getItem("adminToken");
+            if (token === "emperorofthevoid_admin_2025") {
+                isAdmin = true;
+                showAdminPanel();
+            } else {
+                showLoginScreen();
+            }
+        }
+
+        function showLoginScreen() {
+            document.getElementById("loginScreen").style.display = "block";
+            document.getElementById("adminPanel").style.display = "none";
+        }
+
+        function showAdminPanel() {
+            document.getElementById("loginScreen").style.display = "none";
+            document.getElementById("adminPanel").style.display = "block";
+            updateCurrentTime();
+            loadDashboardData();
+        }
+
+        // Update Current Time
+        function updateCurrentTime() {
+            const timeElement = document.getElementById("currentTime");
+            if (timeElement) {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('ar-SA', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                timeElement.textContent = timeString;
+            }
+            setTimeout(updateCurrentTime, 1000);
+        }
+
+        // Navigation
+        function initNavigation() {
+            // Navigation items
+            document.querySelectorAll(".nav-item").forEach(item => {
+                item.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    
+                    // Remove active class from all items
+                    document.querySelectorAll(".nav-item").forEach(i => {
+                        i.classList.remove("active");
+                    });
+                    
+                    // Add active class to clicked item
+                    item.classList.add("active");
+                    
+                    // Show corresponding section
+                    const sectionId = item.getAttribute("data-section");
+                    showSection(sectionId);
+                });
+            });
+
+            // Quick action buttons
+            document.getElementById("addAchievementQuick")?.addEventListener("click", () => {
+                document.querySelectorAll(".nav-item").forEach(i => i.classList.remove("active"));
+                document.querySelector('[data-section="achievements"]').classList.add("active");
+                showSection("achievements");
+            });
+
+            document.getElementById("addPortfolioQuick")?.addEventListener("click", () => {
+                document.querySelectorAll(".nav-item").forEach(i => i.classList.remove("active"));
+                document.querySelector('[data-section="portfolio"]').classList.add("active");
+                showSection("portfolio");
+            });
+
+            document.getElementById("addBlogQuick")?.addEventListener("click", () => {
+                document.querySelectorAll(".nav-item").forEach(i => i.classList.remove("active"));
+                document.querySelector('[data-section="blog"]').classList.add("active");
+                showSection("blog");
+            });
+        }
+
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll(".section").forEach(section => {
+                section.classList.remove("active");
+            });
+            
+            // Show selected section
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.classList.add("active");
+                
+                // Load section data
+                switch(sectionId) {
+                    case "dashboard":
+                        loadDashboardData();
+                        break;
+                    case "achievements":
+                        loadAchievements();
+                        break;
+                    case "portfolio":
+                        loadPortfolio();
+                        break;
+                    case "blog":
+                        loadBlogPosts();
+                        break;
+                    case "comments":
+                        loadComments();
+                        break;
+                    case "ratings":
+                        loadRatings();
+                        break;
+                    case "players":
+                        loadPlayers();
+                        break;
+                    case "analytics":
+                        loadAnalytics();
+                        break;
+                }
+            }
+        }
+
+        // Load Dashboard Data
+        async function loadDashboardData() {
+            try {
+                // Load statistics
+                const statsDoc = await db.collection('statistics').doc('visitors').get();
+                if (statsDoc.exists) {
+                    const stats = statsDoc.data();
+                    document.getElementById('totalVisitors').textContent = stats.count || 0;
+                }
+
+                // Load players count
+                const playersSnapshot = await db.collection('players').get();
+                document.getElementById('totalPlayers').textContent = playersSnapshot.size;
+
+                // Load comments count
+                const commentsSnapshot = await db.collection('comments').get();
+                document.getElementById('totalComments').textContent = commentsSnapshot.size;
+
+                // Load achievements count
+                const achievementsSnapshot = await db.collection('achievements').get();
+                document.getElementById('totalAchievements').textContent = achievementsSnapshot.size;
+
+                // Load ratings count
+                const ratingsSnapshot = await db.collection('ratings').get();
+                document.getElementById('totalRatings').textContent = ratingsSnapshot.size;
+
+                // Load games count
+                const gamesSnapshot = await db.collection('gameScores').get();
+                document.getElementById('totalGames').textContent = gamesSnapshot.size;
+
+                // Load recent activity
+                await loadRecentActivity();
+
+            } catch (error) {
+                console.error("Error loading dashboard data:", error);
+                showToast("حدث خطأ في تحميل البيانات", "error");
+            }
+        }
+
+        async function loadRecentActivity() {
+            try {
+                // Get recent activities from different collections
+                const activities = [];
+                
+                // Get recent achievements
+                const achievementsSnapshot = await db.collection('achievements')
+                    .orderBy('date', 'desc')
+                    .limit(5)
+                    .get();
+                
+                achievementsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    activities.push({
+                        type: "إنجاز",
+                        description: data.title?.ar || "إنجاز جديد",
+                        date: data.date?.toDate() || new Date()
+                    });
+                });
+
+                // Get recent comments
+                const commentsSnapshot = await db.collection('comments')
+                    .orderBy('timestamp', 'desc')
+                    .limit(5)
+                    .get();
+                
+                commentsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    activities.push({
+                        type: "تعليق",
+                        description: `تعليق جديد في قسم ${data.tabId}`,
+                        date: data.timestamp?.toDate() || new Date()
+                    });
+                });
+
+                // Sort by date
+                activities.sort((a, b) => b.date - a.date);
+                
+                // Display activities
+                const tbody = document.getElementById("recentActivity");
+                if (tbody) {
+                    tbody.innerHTML = activities.slice(0, 10).map(activity => `
+                        <tr>
+                            <td>${activity.type}</td>
+                            <td>${activity.description}</td>
+                            <td>${activity.date.toLocaleString('ar-SA')}</td>
+                        </tr>
+                    `).join('');
+                }
+
+            } catch (error) {
+                console.error("Error loading recent activity:", error);
+            }
+        }
+
+        // Load Achievements
+        async function loadAchievements() {
+            try {
+                const snapshot = await db.collection('achievements')
+                    .orderBy('date', 'desc')
+                    .get();
+                
+                const tbody = document.getElementById("achievementsList");
+                if (!tbody) return;
+                
+                tbody.innerHTML = snapshot.docs.map(doc => {
+                    const achievement = doc.data();
+                    return `
+                        <tr>
+                            <td>${achievement.title?.ar || achievement.title}</td>
+                            <td>${(achievement.description?.ar || achievement.description || '').substring(0, 100)}...</td>
+                            <td>${achievement.date?.toDate().toLocaleDateString('ar-SA') || '--'}</td>
+                            <td class="action-buttons">
+                                <button class="btn-small btn-edit" onclick="editAchievement('${doc.id}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-small btn-delete" onclick="deleteAchievement('${doc.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Error loading achievements:", error);
+                showToast("حدث خطأ في تحميل الإنجازات", "error");
+            }
+        }
+
+        // Add Achievement
+        document.getElementById("addAchievementBtn")?.addEventListener("click", async () => {
+            const titleAr = document.getElementById("achievementTitleAr").value.trim();
+            const titleEn = document.getElementById("achievementTitleEn").value.trim();
+            const descAr = document.getElementById("achievementDescAr").value.trim();
+            const descEn = document.getElementById("achievementDescEn").value.trim();
+            
+            if (!titleAr || !descAr) {
+                showToast("يرجى ملء العنوان والوصف بالعربية", "error");
+                return;
+            }
+            
+            try {
+                await db.collection('achievements').add({
+                    title: { ar: titleAr, en: titleEn || titleAr },
+                    description: { ar: descAr, en: descEn || descAr },
+                    date: firebase.firestore.FieldValue.serverTimestamp(),
+                    category: { ar: "إنجاز", en: "Achievement" }
+                });
+                
+                // Clear form
+                document.getElementById("achievementTitleAr").value = "";
+                document.getElementById("achievementTitleEn").value = "";
+                document.getElementById("achievementDescAr").value = "";
+                document.getElementById("achievementDescEn").value = "";
+                
+                // Reload data
+                await loadAchievements();
+                await loadDashboardData();
+                
+                showToast("تم إضافة الإنجاز بنجاح", "success");
+            } catch (error) {
+                console.error("Error adding achievement:", error);
+                showToast("حدث خطأ في إضافة الإنجاز", "error");
+            }
+        });
+
+        // Edit Achievement
+        window.editAchievement = async function(id) {
+            try {
+                const doc = await db.collection('achievements').doc(id).get();
+                if (!doc.exists) {
+                    showToast("الإنجاز غير موجود", "error");
+                    return;
+                }
+                
+                const achievement = doc.data();
+                
+                // Open edit modal
+                openModal('تعديل الإنجاز', `
+                    <div class="form-group">
+                        <label>العنوان بالعربية</label>
+                        <input type="text" id="editAchievementTitleAr" class="form-control" value="${achievement.title?.ar || achievement.title}">
+                    </div>
+                    <div class="form-group">
+                        <label>Title in English</label>
+                        <input type="text" id="editAchievementTitleEn" class="form-control" value="${achievement.title?.en || achievement.title}">
+                    </div>
+                    <div class="form-group">
+                        <label>الوصف بالعربية</label>
+                        <textarea id="editAchievementDescAr" class="form-control" rows="3">${achievement.description?.ar || achievement.description}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Description in English</label>
+                        <textarea id="editAchievementDescEn" class="form-control" rows="3">${achievement.description?.en || achievement.description}</textarea>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-success" onclick="updateAchievement('${id}')">
+                            <i class="fas fa-save"></i>
+                            <span>حفظ التغييرات</span>
+                        </button>
+                        <button class="btn btn-danger" onclick="closeModal()">
+                            <i class="fas fa-times"></i>
+                            <span>إلغاء</span>
+                        </button>
+                    </div>
+                `);
+                
+            } catch (error) {
+                console.error("Error editing achievement:", error);
+                showToast("حدث خطأ في تحميل بيانات الإنجاز", "error");
+            }
+        };
+
+        // Update Achievement
+        window.updateAchievement = async function(id) {
+            const titleAr = document.getElementById("editAchievementTitleAr").value.trim();
+            const titleEn = document.getElementById("editAchievementTitleEn").value.trim();
+            const descAr = document.getElementById("editAchievementDescAr").value.trim();
+            const descEn = document.getElementById("editAchievementDescEn").value.trim();
+            
+            if (!titleAr || !descAr) {
+                showToast("يرجى ملء العنوان والوصف بالعربية", "error");
+                return;
+            }
+            
+            try {
+                await db.collection('achievements').doc(id).update({
+                    title: { ar: titleAr, en: titleEn || titleAr },
+                    description: { ar: descAr, en: descEn || descAr }
+                });
+                
+                closeModal();
+                await loadAchievements();
+                showToast("تم تحديث الإنجاز بنجاح", "success");
+            } catch (error) {
+                console.error("Error updating achievement:", error);
+                showToast("حدث خطأ في تحديث الإنجاز", "error");
+            }
+        };
+
+        // Delete Achievement
+        window.deleteAchievement = async function(id) {
+            if (!confirm("هل أنت متأكد من حذف هذا الإنجاز؟")) {
+                return;
+            }
+            
+            try {
+                await db.collection('achievements').doc(id).delete();
+                await loadAchievements();
+                await loadDashboardData();
+                showToast("تم حذف الإنجاز بنجاح", "success");
+            } catch (error) {
+                console.error("Error deleting achievement:", error);
+                showToast("حدث خطأ في حذف الإنجاز", "error");
+            }
+        };
+
+        // Load Portfolio
+        async function loadPortfolio() {
+            try {
+                const snapshot = await db.collection('portfolio')
+                    .orderBy('date', 'desc')
+                    .get();
+                
+                const tbody = document.getElementById("portfolioList");
+                if (!tbody) return;
+                
+                tbody.innerHTML = snapshot.docs.map(doc => {
+                    const item = doc.data();
+                    return `
+                        <tr>
+                            <td>${item.title?.ar || item.title}</td>
+                            <td>${(item.description?.ar || item.description || '').substring(0, 100)}...</td>
+                            <td>
+                                ${item.image ? `<img src="${item.image}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">` : 'بدون صورة'}
+                            </td>
+                            <td class="action-buttons">
+                                <button class="btn-small btn-edit" onclick="editPortfolioItem('${doc.id}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-small btn-delete" onclick="deletePortfolioItem('${doc.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Error loading portfolio:", error);
+                showToast("حدث خطأ في تحميل الأعمال", "error");
+            }
+        }
+
+        // Add Portfolio Item
+        document.getElementById("addPortfolioBtn")?.addEventListener("click", async () => {
+            const titleAr = document.getElementById("portfolioTitleAr").value.trim();
+            const titleEn = document.getElementById("portfolioTitleEn").value.trim();
+            const descAr = document.getElementById("portfolioDescAr").value.trim();
+            const descEn = document.getElementById("portfolioDescEn").value.trim();
+            const image = document.getElementById("portfolioImage").value.trim();
+            
+            if (!titleAr || !descAr) {
+                showToast("يرجى ملء العنوان والوصف بالعربية", "error");
+                return;
+            }
+            
+            try {
+                await db.collection('portfolio').add({
+                    title: { ar: titleAr, en: titleEn || titleAr },
+                    description: { ar: descAr, en: descEn || descAr },
+                    image: image || "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                    tags: [{ ar: "ويب", en: "Web" }, { ar: "تصميم", en: "Design" }],
+                    date: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Clear form
+                document.getElementById("portfolioTitleAr").value = "";
+                document.getElementById("portfolioTitleEn").value = "";
+                document.getElementById("portfolioDescAr").value = "";
+                document.getElementById("portfolioDescEn").value = "";
+                document.getElementById("portfolioImage").value = "";
+                
+                // Reload data
+                await loadPortfolio();
+                
+                showToast("تم إضافة العمل بنجاح", "success");
+            } catch (error) {
+                console.error("Error adding portfolio item:", error);
+                showToast("حدث خطأ في إضافة العمل", "error");
+            }
+        });
+
+        // Edit Portfolio Item
+        window.editPortfolioItem = async function(id) {
+            try {
+                const doc = await db.collection('portfolio').doc(id).get();
+                if (!doc.exists) {
+                    showToast("العمل غير موجود", "error");
+                    return;
+                }
+                
+                const item = doc.data();
+                
+                // Open edit modal
+                openModal('تعديل العمل', `
+                    <div class="form-group">
+                        <label>العنوان بالعربية</label>
+                        <input type="text" id="editPortfolioTitleAr" class="form-control" value="${item.title?.ar || item.title}">
+                    </div>
+                    <div class="form-group">
+                        <label>Title in English</label>
+                        <input type="text" id="editPortfolioTitleEn" class="form-control" value="${item.title?.en || item.title}">
+                    </div>
+                    <div class="form-group">
+                        <label>الوصف بالعربية</label>
+                        <textarea id="editPortfolioDescAr" class="form-control" rows="3">${item.description?.ar || item.description}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Description in English</label>
+                        <textarea id="editPortfolioDescEn" class="form-control" rows="3">${item.description?.en || item.description}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>رابط الصورة</label>
+                        <input type="text" id="editPortfolioImage" class="form-control" value="${item.image || ''}">
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-success" onclick="updatePortfolioItem('${id}')">
+                            <i class="fas fa-save"></i>
+                            <span>حفظ التغييرات</span>
+                        </button>
+                        <button class="btn btn-danger" onclick="closeModal()">
+                            <i class="fas fa-times"></i>
+                            <span>إلغاء</span>
+                        </button>
+                    </div>
+                `);
+                
+            } catch (error) {
+                console.error("Error editing portfolio item:", error);
+                showToast("حدث خطأ في تحميل بيانات العمل", "error");
+            }
+        };
+
+        // Update Portfolio Item
+        window.updatePortfolioItem = async function(id) {
+            const titleAr = document.getElementById("editPortfolioTitleAr").value.trim();
+            const titleEn = document.getElementById("editPortfolioTitleEn").value.trim();
+            const descAr = document.getElementById("editPortfolioDescAr").value.trim();
+            const descEn = document.getElementById("editPortfolioDescEn").value.trim();
+            const image = document.getElementById("editPortfolioImage").value.trim();
+            
+            if (!titleAr || !descAr) {
+                showToast("يرجى ملء العنوان والوصف بالعربية", "error");
+                return;
+            }
+            
+            try {
+                await db.collection('portfolio').doc(id).update({
+                    title: { ar: titleAr, en: titleEn || titleAr },
+                    description: { ar: descAr, en: descEn || descAr },
+                    image: image || "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                });
+                
+                closeModal();
+                await loadPortfolio();
+                showToast("تم تحديث العمل بنجاح", "success");
+            } catch (error) {
+                console.error("Error updating portfolio item:", error);
+                showToast("حدث خطأ في تحديث العمل", "error");
+            }
+        };
+
+        // Delete Portfolio Item
+        window.deletePortfolioItem = async function(id) {
+            if (!confirm("هل أنت متأكد من حذف هذا العمل؟")) {
+                return;
+            }
+            
+            try {
+                await db.collection('portfolio').doc(id).delete();
+                await loadPortfolio();
+                showToast("تم حذف العمل بنجاح", "success");
+            } catch (error) {
+                console.error("Error deleting portfolio item:", error);
+                showToast("حدث خطأ في حذف العمل", "error");
+            }
+        };
+
+        // Load Blog Posts
+        async function loadBlogPosts() {
+            try {
+                const snapshot = await db.collection('blogPosts')
+                    .orderBy('date', 'desc')
+                    .get();
+                
+                const tbody = document.getElementById("blogList");
+                if (!tbody) return;
+                
+                tbody.innerHTML = snapshot.docs.map(doc => {
+                    const post = doc.data();
+                    return `
+                        <tr>
+                            <td>${post.title?.ar || post.title}</td>
+                            <td>${(post.content?.ar || post.content || '').substring(0, 100)}...</td>
+                            <td>${post.date?.toDate().toLocaleDateString('ar-SA') || '--'}</td>
+                            <td>${post.likes || 0}</td>
+                            <td class="action-buttons">
+                                <button class="btn-small btn-view" onclick="viewBlogPost('${doc.id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn-small btn-edit" onclick="editBlogPost('${doc.id}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-small btn-delete" onclick="deleteBlogPost('${doc.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Error loading blog posts:", error);
+                showToast("حدث خطأ في تحميل المقالات", "error");
+            }
+        }
+
+        // Add Blog Post
+        document.getElementById("addBlogBtn")?.addEventListener("click", async () => {
+            const titleAr = document.getElementById("blogTitleAr").value.trim();
+            const titleEn = document.getElementById("blogTitleEn").value.trim();
+            const contentAr = document.getElementById("blogContentAr").value.trim();
+            const contentEn = document.getElementById("blogContentEn").value.trim();
+            
+            if (!titleAr || !contentAr) {
+                showToast("يرجى ملء العنوان والمحتوى بالعربية", "error");
+                return;
+            }
+            
+            try {
+                await db.collection('blogPosts').add({
+                    title: { ar: titleAr, en: titleEn || titleAr },
+                    content: { ar: contentAr, en: contentEn || contentAr },
+                    date: firebase.firestore.FieldValue.serverTimestamp(),
+                    likes: 0,
+                    commentCount: 0
+                });
+                
+                // Clear form
+                document.getElementById("blogTitleAr").value = "";
+                document.getElementById("blogTitleEn").value = "";
+                document.getElementById("blogContentAr").value = "";
+                document.getElementById("blogContentEn").value = "";
+                
+                // Reload data
+                await loadBlogPosts();
+                
+                showToast("تم نشر المقال بنجاح", "success");
+            } catch (error) {
+                console.error("Error adding blog post:", error);
+                showToast("حدث خطأ في نشر المقال", "error");
+            }
+        });
+
+        // View Blog Post
+        window.viewBlogPost = async function(id) {
+            try {
+                const doc = await db.collection('blogPosts').doc(id).get();
+                if (!doc.exists) {
+                    showToast("المقال غير موجود", "error");
+                    return;
+                }
+                
+                const post = doc.data();
+                
+                openModal(post.title?.ar || post.title, `
+                    <div style="margin-bottom: 20px; color: var(--text-secondary);">
+                        <i class="fas fa-calendar"></i>
+                        ${post.date?.toDate().toLocaleString('ar-SA') || '--'}
+                    </div>
+                    <div style="line-height: 1.8; font-size: 1.1rem; white-space: pre-line;">
+                        ${post.content?.ar || post.content}
+                    </div>
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--text-secondary);">
+                        <i class="fas fa-heart"></i> ${post.likes || 0} إعجاب
+                    </div>
+                `);
+                
+            } catch (error) {
+                console.error("Error viewing blog post:", error);
+                showToast("حدث خطأ في تحميل المقال", "error");
+            }
+        };
+
+        // Edit Blog Post
+        window.editBlogPost = async function(id) {
+            try {
+                const doc = await db.collection('blogPosts').doc(id).get();
+                if (!doc.exists) {
+                    showToast("المقال غير موجود", "error");
+                    return;
+                }
+                
+                const post = doc.data();
+                
+                openModal('تعديل المقال', `
+                    <div class="form-group">
+                        <label>العنوان بالعربية</label>
+                        <input type="text" id="editBlogTitleAr" class="form-control" value="${post.title?.ar || post.title}">
+                    </div>
+                    <div class="form-group">
+                        <label>Title in English</label>
+                        <input type="text" id="editBlogTitleEn" class="form-control" value="${post.title?.en || post.title}">
+                    </div>
+                    <div class="form-group">
+                        <label>المحتوى بالعربية</label>
+                        <textarea id="editBlogContentAr" class="form-control" rows="6">${post.content?.ar || post.content}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Content in English</label>
+                        <textarea id="editBlogContentEn" class="form-control" rows="6">${post.content?.en || post.content}</textarea>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-success" onclick="updateBlogPost('${id}')">
+                            <i class="fas fa-save"></i>
+                            <span>حفظ التغييرات</span>
+                        </button>
+                        <button class="btn btn-danger" onclick="closeModal()">
+                            <i class="fas fa-times"></i>
+                            <span>إلغاء</span>
+                        </button>
+                    </div>
+                `);
+                
+            } catch (error) {
+                console.error("Error editing blog post:", error);
+                showToast("حدث خطأ في تحميل بيانات المقال", "error");
+            }
+        };
+
+        // Update Blog Post
+        window.updateBlogPost = async function(id) {
+            const titleAr = document.getElementById("editBlogTitleAr").value.trim();
+            const titleEn = document.getElementById("editBlogTitleEn").value.trim();
+            const contentAr = document.getElementById("editBlogContentAr").value.trim();
+            const contentEn = document.getElementById("editBlogContentEn").value.trim();
+            
+            if (!titleAr || !contentAr) {
+                showToast("يرجى ملء العنوان والمحتوى بالعربية", "error");
+                return;
+            }
+            
+            try {
+                await db.collection('blogPosts').doc(id).update({
+                    title: { ar: titleAr, en: titleEn || titleAr },
+                    content: { ar: contentAr, en: contentEn || contentAr }
+                });
+                
+                closeModal();
+                await loadBlogPosts();
+                showToast("تم تحديث المقال بنجاح", "success");
+            } catch (error) {
+                console.error("Error updating blog post:", error);
+                showToast("حدث خطأ في تحديث المقال", "error");
+            }
+        };
+
+        // Delete Blog Post
+        window.deleteBlogPost = async function(id) {
+            if (!confirm("هل أنت متأكد من حذف هذا المقال؟")) {
+                return;
+            }
+            
+            try {
+                await db.collection('blogPosts').doc(id).delete();
+                await loadBlogPosts();
+                showToast("تم حذف المقال بنجاح", "success");
+            } catch (error) {
+                console.error("Error deleting blog post:", error);
+                showToast("حدث خطأ في حذف المقال", "error");
+            }
+        };
+
+        // Load Comments
+        async function loadComments() {
+            try {
+                const snapshot = await db.collection('comments')
+                    .orderBy('timestamp', 'desc')
+                    .limit(100)
+                    .get();
+                
+                const tbody = document.getElementById("commentsList");
+                if (!tbody) return;
+                
+                tbody.innerHTML = snapshot.docs.map(doc => {
+                    const comment = doc.data();
+                    return `
+                        <tr>
+                            <td>${comment.author || 'زائر'}</td>
+                            <td>${comment.content.substring(0, 100)}${comment.content.length > 100 ? '...' : ''}</td>
+                            <td>${comment.tabId || 'عام'}</td>
+                            <td>${comment.timestamp?.toDate().toLocaleString('ar-SA') || '--'}</td>
+                            <td class="action-buttons">
+                                <button class="btn-small btn-view" onclick="viewComment('${doc.id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn-small btn-delete" onclick="deleteComment('${doc.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Error loading comments:", error);
+                showToast("حدث خطأ في تحميل التعليقات", "error");
+            }
+        }
+
+        // View Comment
+        window.viewComment = async function(id) {
+            try {
+                const doc = await db.collection('comments').doc(id).get();
+                if (!doc.exists) {
+                    showToast("التعليق غير موجود", "error");
+                    return;
+                }
+                
+                const comment = doc.data();
+                
+                openModal('عرض التعليق', `
+                    <div style="margin-bottom: 15px;">
+                        <strong>الاسم:</strong> ${comment.author || 'زائر'}
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong>القسم:</strong> ${comment.tabId || 'عام'}
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong>التاريخ:</strong> ${comment.timestamp?.toDate().toLocaleString('ar-SA') || '--'}
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: var(--radius); margin-bottom: 20px; line-height: 1.8;">
+                        ${comment.content}
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-danger" onclick="deleteComment('${id}')">
+                            <i class="fas fa-trash"></i>
+                            <span>حذف التعليق</span>
+                        </button>
+                        <button class="btn btn-primary" onclick="closeModal()">
+                            <i class="fas fa-times"></i>
+                            <span>إغلاق</span>
+                        </button>
+                    </div>
+                `);
+                
+            } catch (error) {
+                console.error("Error viewing comment:", error);
+                showToast("حدث خطأ في تحميل التعليق", "error");
+            }
+        };
+
+        // Delete Comment
+        window.deleteComment = async function(id) {
+            if (!confirm("هل أنت متأكد من حذف هذا التعليق؟")) {
+                return;
+            }
+            
+            try {
+                await db.collection('comments').doc(id).delete();
+                await loadComments();
+                await loadDashboardData();
+                closeModal();
+                showToast("تم حذف التعليق بنجاح", "success");
+            } catch (error) {
+                console.error("Error deleting comment:", error);
+                showToast("حدث خطأ في حذف التعليق", "error");
+            }
+        };
+
+        // Load Ratings
+        async function loadRatings() {
+            try {
+                const snapshot = await db.collection('ratings')
+                    .orderBy('timestamp', 'desc')
+                    .limit(100)
+                    .get();
+                
+                const tbody = document.getElementById("ratingsList");
+                if (!tbody) return;
+                
+                tbody.innerHTML = snapshot.docs.map(doc => {
+                    const rating = doc.data();
+                    return `
+                        <tr>
+                            <td>${rating.user || 'زائر'}</td>
+                            <td>
+                                ${'★'.repeat(rating.rating)}${'☆'.repeat(5 - rating.rating)}
+                                (${rating.rating}/5)
+                            </td>
+                            <td>${rating.comment ? rating.comment.substring(0, 100) + (rating.comment.length > 100 ? '...' : '') : 'بدون تعليق'}</td>
+                            <td>${rating.timestamp?.toDate().toLocaleString('ar-SA') || '--'}</td>
+                            <td class="action-buttons">
+                                <button class="btn-small btn-view" onclick="viewRating('${doc.id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn-small btn-delete" onclick="deleteRating('${doc.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Error loading ratings:", error);
+                showToast("حدث خطأ في تحميل التقييمات", "error");
+            }
+        }
+
+        // View Rating
+        window.viewRating = async function(id) {
+            try {
+                const doc = await db.collection('ratings').doc(id).get();
+                if (!doc.exists) {
+                    showToast("التقييم غير موجود", "error");
+                    return;
+                }
+                
+                const rating = doc.data();
+                
+                openModal('عرض التقييم', `
+                    <div style="margin-bottom: 15px;">
+                        <strong>المستخدم:</strong> ${rating.user || 'زائر'}
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong>التقييم:</strong>
+                        <div style="color: var(--gold); font-size: 1.5rem; margin-top: 5px;">
+                            ${'★'.repeat(rating.rating)}${'☆'.repeat(5 - rating.rating)}
+                            (${rating.rating}/5)
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong>التاريخ:</strong> ${rating.timestamp?.toDate().toLocaleString('ar-SA') || '--'}
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <strong>التعليق:</strong>
+                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: var(--radius); margin-top: 5px; line-height: 1.6;">
+                            ${rating.comment || 'بدون تعليق'}
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-danger" onclick="deleteRating('${id}')">
+                            <i class="fas fa-trash"></i>
+                            <span>حذف التقييم</span>
+                        </button>
+                        <button class="btn btn-primary" onclick="closeModal()">
+                            <i class="fas fa-times"></i>
+                            <span>إغلاق</span>
+                        </button>
+                    </div>
+                `);
+                
+            } catch (error) {
+                console.error("Error viewing rating:", error);
+                showToast("حدث خطأ في تحميل التقييم", "error");
+            }
+        };
+
+        // Delete Rating
+        window.deleteRating = async function(id) {
+            if (!confirm("هل أنت متأكد من حذف هذا التقييم؟")) {
+                return;
+            }
+            
+            try {
+                await db.collection('ratings').doc(id).delete();
+                await loadRatings();
+                await loadDashboardData();
+                closeModal();
+                showToast("تم حذف التقييم بنجاح", "success");
+            } catch (error) {
+                console.error("Error deleting rating:", error);
+                showToast("حدث خطأ في حذف التقييم", "error");
+            }
+        };
+
+        // Load Players
+        async function loadPlayers() {
+            try {
+                const snapshot = await db.collection('players')
+                    .orderBy('created', 'desc')
+                    .limit(100)
+                    .get();
+                
+                // Get game scores for each player
+                const playersWithStats = await Promise.all(snapshot.docs.map(async (doc) => {
+                    const player = doc.data();
+                    
+                    // Get player's game scores
+                    const scoresSnapshot = await db.collection('gameScores')
+                        .where('playerId', '==', doc.id)
+                        .orderBy('score', 'desc')
+                        .get();
+                    
+                    const gamesPlayed = scoresSnapshot.size;
+                    let bestScore = 0;
+                    
+                    if (gamesPlayed > 0) {
+                        scoresSnapshot.forEach(scoreDoc => {
+                            const score = scoreDoc.data().score;
+                            if (score > bestScore) bestScore = score;
+                        });
+                    }
+                    
+                    return {
+                        id: doc.id,
+                        name: player.name,
+                        created: player.created,
+                        gamesPlayed: gamesPlayed,
+                        bestScore: bestScore
+                    };
+                }));
+                
+                const tbody = document.getElementById("playersList");
+                if (!tbody) return;
+                
+                tbody.innerHTML = playersWithStats.map(player => `
+                    <tr>
+                        <td>${player.name}</td>
+                        <td>${player.created?.toDate().toLocaleDateString('ar-SA') || '--'}</td>
+                        <td>${player.gamesPlayed}</td>
+                        <td>${player.bestScore}</td>
+                        <td class="action-buttons">
+                            <button class="btn-small btn-view" onclick="viewPlayer('${player.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-small btn-delete" onclick="deletePlayer('${player.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error("Error loading players:", error);
+                showToast("حدث خطأ في تحميل اللاعبين", "error");
+            }
+        }
+
+        // View Player
+        window.viewPlayer = async function(id) {
+            try {
+                const playerDoc = await db.collection('players').doc(id).get();
+                if (!playerDoc.exists) {
+                    showToast("اللاعب غير موجود", "error");
+                    return;
+                }
+                
+                const player = playerDoc.data();
+                
+                // Get player's game scores
+                const scoresSnapshot = await db.collection('gameScores')
+                    .where('playerId', '==', id)
+                    .orderBy('score', 'desc')
+                    .get();
+                
+                const gamesPlayed = scoresSnapshot.size;
+                let totalScore = 0;
+                let bestScore = 0;
+                const gameStats = {};
+                
+                scoresSnapshot.forEach(scoreDoc => {
+                    const scoreData = scoreDoc.data();
+                    const score = scoreData.score;
+                    const gameType = scoreData.gameType;
+                    
+                    totalScore += score;
+                    if (score > bestScore) bestScore = score;
+                    
+                    if (!gameStats[gameType]) {
+                        gameStats[gameType] = { count: 0, total: 0, best: 0 };
+                    }
+                    
+                    gameStats[gameType].count++;
+                    gameStats[gameType].total += score;
+                    if (score > gameStats[gameType].best) {
+                        gameStats[gameType].best = score;
+                    }
+                });
+                
+                const averageScore = gamesPlayed > 0 ? Math.round(totalScore / gamesPlayed) : 0;
+                
+                openModal(`معلومات اللاعب: ${player.name}`, `
+                    <div style="margin-bottom: 15px;">
+                        <strong>اسم اللاعب:</strong> ${player.name}
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong>تاريخ التسجيل:</strong> ${player.created?.toDate().toLocaleString('ar-SA') || '--'}
+                    </div>
+                    <div style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: var(--radius);">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+                            <div>
+                                <div style="font-size: 1.5rem; color: var(--accent-light); font-weight: bold;">${gamesPlayed}</div>
+                                <div style="font-size: 0.9rem; color: var(--text-secondary);">مباريات</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.5rem; color: var(--accent-light); font-weight: bold;">${bestScore}</div>
+                                <div style="font-size: 0.9rem; color: var(--text-secondary);">أفضل نتيجة</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 1.5rem; color: var(--accent-light); font-weight: bold;">${averageScore}</div>
+                                <div style="font-size: 0.9rem; color: var(--text-secondary);">متوسط النقاط</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${Object.keys(gameStats).length > 0 ? `
+                        <h4 style="color: var(--accent-light); margin-bottom: 15px; margin-top: 25px;">إحصائيات الألعاب</h4>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                            <thead>
+                                <tr>
+                                    <th style="padding: 10px; text-align: right; border-bottom: 1px solid var(--border);">اللعبة</th>
+                                    <th style="padding: 10px; text-align: center; border-bottom: 1px solid var(--border);">المباريات</th>
+                                    <th style="padding: 10px; text-align: center; border-bottom: 1px solid var(--border);">أفضل نتيجة</th>
+                                    <th style="padding: 10px; text-align: center; border-bottom: 1px solid var(--border);">المتوسط</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(gameStats).map(([gameType, stats]) => `
+                                    <tr>
+                                        <td style="padding: 10px; border-bottom: 1px solid var(--border);">${getGameName(gameType)}</td>
+                                        <td style="padding: 10px; text-align: center; border-bottom: 1px solid var(--border);">${stats.count}</td>
+                                        <td style="padding: 10px; text-align: center; border-bottom: 1px solid var(--border);">${stats.best}</td>
+                                        <td style="padding: 10px; text-align: center; border-bottom: 1px solid var(--border);">${Math.round(stats.total / stats.count)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : ''}
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-danger" onclick="deletePlayer('${id}')">
+                            <i class="fas fa-trash"></i>
+                            <span>حذف اللاعب</span>
+                        </button>
+                        <button class="btn btn-primary" onclick="closeModal()">
+                            <i class="fas fa-times"></i>
+                            <span>إغلاق</span>
+                        </button>
+                    </div>
+                `);
+                
+            } catch (error) {
+                console.error("Error viewing player:", error);
+                showToast("حدث خطأ في تحميل معلومات اللاعب", "error");
+            }
+        };
+
+        function getGameName(gameType) {
+            const gameNames = {
+                quiz: "اختبار المعلومات",
+                memory: "لعبة الذاكرة",
+                typing: "سرعة الكتابة",
+                reaction: "سرعة رد الفعل",
+                snake: "لعبة الثعبان",
+                spacewar: "حرب الفضاء"
+            };
+            return gameNames[gameType] || gameType;
+        }
+
+        // Delete Player
+        window.deletePlayer = async function(id) {
+            if (!confirm("هل أنت متأكد من حذف هذا اللاعب؟ سيتم حذف جميع نتائجه أيضاً.")) {
+                return;
+            }
+            
+            try {
+                // Delete player
+                await db.collection('players').doc(id).delete();
+                
+                // Delete player's game scores
+                const scoresSnapshot = await db.collection('gameScores')
+                    .where('playerId', '==', id)
+                    .get();
+                
+                const batch = db.batch();
+                scoresSnapshot.forEach(scoreDoc => {
+                    batch.delete(scoreDoc.ref);
+                });
+                await batch.commit();
+                
+                await loadPlayers();
+                await loadDashboardData();
+                closeModal();
+                showToast("تم حذف اللاعب بنجاح", "success");
+            } catch (error) {
+                console.error("Error deleting player:", error);
+                showToast("حدث خطأ في حذف اللاعب", "error");
+            }
+        };
+
+        // Load Analytics
+        async function loadAnalytics() {
+            try {
+                // Calculate visitor statistics
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const weekAgo = new Date(today);
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                
+                const monthAgo = new Date(today);
+                monthAgo.setMonth(monthAgo.getMonth() - 1);
+                
+                // Get visits data
+                const visitsSnapshot = await db.collection('visits')
+                    .orderBy('timestamp', 'desc')
+                    .get();
+                
+                let todayCount = 0;
+                let weekCount = 0;
+                let monthCount = 0;
+                
+                visitsSnapshot.forEach(doc => {
+                    const visit = doc.data();
+                    const visitDate = visit.timestamp?.toDate();
+                    
+                    if (visitDate) {
+                        if (visitDate >= today) todayCount++;
+                        if (visitDate >= weekAgo) weekCount++;
+                        if (visitDate >= monthAgo) monthCount++;
+                    }
+                });
+                
+                document.getElementById('visitorsToday').textContent = todayCount;
+                document.getElementById('visitorsWeek').textContent = weekCount;
+                document.getElementById('visitorsMonth').textContent = monthCount;
+                
+                // Calculate game statistics
+                const gamesSnapshot = await db.collection('gameScores').get();
+                const gameStats = {};
+                
+                gamesSnapshot.forEach(doc => {
+                    const score = doc.data();
+                    const gameType = score.gameType;
+                    
+                    if (!gameStats[gameType]) {
+                        gameStats[gameType] = {
+                            count: 0,
+                            totalScore: 0,
+                            bestScore: 0
+                        };
+                    }
+                    
+                    gameStats[gameType].count++;
+                    gameStats[gameType].totalScore += score.score;
+                    if (score.score > gameStats[gameType].bestScore) {
+                        gameStats[gameType].bestScore = score.score;
+                    }
+                });
+                
+                const tbody = document.getElementById("gamesStats");
+                if (tbody) {
+                    tbody.innerHTML = Object.entries(gameStats).map(([gameType, stats]) => `
+                        <tr>
+                            <td>${getGameName(gameType)}</td>
+                            <td>${stats.count}</td>
+                            <td>${stats.count > 0 ? Math.round(stats.totalScore / stats.count) : 0}</td>
+                            <td>${stats.bestScore}</td>
+                        </tr>
+                    `).join('');
+                }
+                
+            } catch (error) {
+                console.error("Error loading analytics:", error);
+                showToast("حدث خطأ في تحميل الإحصائيات", "error");
+            }
+        }
+
+        // Modal Functions
+        function openModal(title, content) {
+            document.getElementById("modalTitle").textContent = title;
+            document.getElementById("modalContent").innerHTML = content;
+            document.getElementById("editModal").classList.add("active");
+        }
+
+        window.closeModal = function() {
+            document.getElementById("editModal").classList.remove("active");
+        };
+
+        // Initialize
+        document.addEventListener("DOMContentLoaded", function() {
+            // Check admin login
+            checkAdminLogin();
+            
+            // Initialize navigation
+            initNavigation();
+            
+            // Login button
+            document.getElementById("loginBtn")?.addEventListener("click", () => {
+                const password = document.getElementById("adminPassword").value;
+                
+                if (password === "voidemperor2025") {
+                    isAdmin = true;
+                    localStorage.setItem("adminToken", "emperorofthevoid_admin_2025");
+                    showAdminPanel();
+                    showToast("مرحباً سيدي الإمبراطور!", "success");
+                } else {
+                    showToast("كلمة المرور غير صحيحة", "error");
+                }
+            });
+            
+            // Logout button
+            document.getElementById("logoutBtn")?.addEventListener("click", () => {
+                isAdmin = false;
+                localStorage.removeItem("adminToken");
+                showLoginScreen();
+                showToast("تم تسجيل الخروج", "info");
+            });
+            
+            // Admin password input enter key
+            document.getElementById("adminPassword")?.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") {
+                    document.getElementById("loginBtn").click();
+                }
+            });
+            
+            // Clear statistics button
+            document.getElementById("clearStatsBtn")?.addEventListener("click", async () => {
+                if (!confirm("هل أنت متأكد من مسح جميع الإحصائيات؟ هذا الإجراء لا يمكن التراجع عنه.")) {
+                    return;
+                }
+                
+                try {
+                    // Reset visitor count
+                    await db.collection('statistics').doc('visitors').set({
+                        count: 0,
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    showToast("تم مسح الإحصائيات بنجاح", "success");
+                    await loadDashboardData();
+                    await loadAnalytics();
+                } catch (error) {
+                    console.error("Error clearing statistics:", error);
+                    showToast("حدث خطأ في مسح الإحصائيات", "error");
+                }
+            });
+            
+            // Export data button
+            document.getElementById("exportDataBtn")?.addEventListener("click", async () => {
+                try {
+                    // Collect all data
+                    const data = {
+                        achievements: [],
+                        portfolio: [],
+                        blogPosts: [],
+                        ratings: [],
+                        gameScores: [],
+                        comments: [],
+                        players: [],
+                        visits: []
+                    };
+                    
+                    // Export achievements
+                    const achievementsSnapshot = await db.collection('achievements').get();
+                    data.achievements = achievementsSnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    
+                    // Export portfolio
+                    const portfolioSnapshot = await db.collection('portfolio').get();
+                    data.portfolio = portfolioSnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    
+                    // Export blog posts
+                    const blogSnapshot = await db.collection('blogPosts').get();
+                    data.blogPosts = blogSnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    
+                    // Create JSON file
+                    const json = JSON.stringify(data, null, 2);
+                    const blob = new Blob([json], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    // Download file
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `void_emperor_data_${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    showToast("تم تصدير البيانات بنجاح", "success");
+                } catch (error) {
+                    console.error("Error exporting data:", error);
+                    showToast("حدث خطأ في تصدير البيانات", "error");
+                }
+            });
+            
+            // Modal close button
+            document.getElementById("closeModal")?.addEventListener("click", closeModal);
+            
+            // Close modal on background click
+            document.getElementById("editModal")?.addEventListener("click", (e) => {
+                if (e.target === document.getElementById("editModal")) {
+                    closeModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
